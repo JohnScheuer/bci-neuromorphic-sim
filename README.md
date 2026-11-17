@@ -6,7 +6,7 @@
 [![CUDA 13.0](https://img.shields.io/badge/CUDA-13.0-green.svg)](https://developer.nvidia.com/cuda-toolkit)
 [![Accuracy 90.2%](https://img.shields.io/badge/Accuracy-90.2%25-brightgreen.svg)]()
 [![Latency 1.44ms](https://img.shields.io/badge/Latency-1.44ms%20Closed--Loop-blueviolet.svg)]()
-[![Memory O(1)](https://img.shields.io/badge/Memory-O(1)%2036.8MB-purple.svg)]()
+[![Memory O(1)](https://img.shields.io/badge/Memory-O(1)%20Flat-purple.svg)]()
 
 > **This repository is a real-time Brain-Computer Interface (BCI) simulator. It bridges a biological neuron model (Izhikevich 2003) with a hardware-accelerated decoder (CUDA). The goal is to measure the latency and accuracy of a closed-loop brain-computer interface on consumer hardware. This is the foundation for transhumanist applications: restoring motor function, enabling thought-to-text, and augmenting human cognition.**
 
@@ -21,7 +21,7 @@ Current Brain-Computer Interface (BCI) clinical decoders (Neuralink, Blackrock N
 This project implements a hardware-accelerated **Neuromorphic BCI Decoder**:
 1. **Biological Cortical Dynamics:** Vectorized **Izhikevich (2003) Regular Spiking (RS)** differential equations.
 2. **Local Online Plasticity:** **Reward-Modulated STDP (R-STDP)** running strictly local weight updates without backpropagation.
-3. **Ultra-Low Latency Closed-Loop:** Sub-millisecond step latency (**1.44 ms** per 40ms motor trial) with flat **36.8 MB $O(1)$ memory footprint**.
+3. **Ultra-Low Latency Closed-Loop:** Sub-millisecond step latency (**1.44 ms** per 40ms motor trial) with flat **$O(1)$ memory footprint**.
 
 ---
 
@@ -34,9 +34,9 @@ Decodification of 4 motor intentions (*Up, Down, Left, Right*) from a 128-channe
 | Metric | R-STDP + Izhikevich (Ours) | BPTT LSTM Baseline |
 |--------|----------------------------|--------------------|
 | **Test Decoding Accuracy** | **90.2%** (902/1000) | 94.5% |
-| **Closed-Loop Latency** | **1.44 ms / trial** | 12.80 ms / trial |
+| **Closed-Loop Latency (T=40ms)** | **1.18 ms / trial** | 12.80 ms / trial |
 | **P99 Decoding Latency** | **1.76 ms** | 18.50 ms |
-| **Memory Footprint** | **36.8 MB (Flat $O(1)$)** | 280.4 MB ($O(T)$) |
+| **Memory Footprint (T=1000ms)** | **100.5 MB (O(1))** | **683.9 MB (O(T))** |
 | **Backpropagation Required** | **No** | Yes |
 | **Neuromorphic Target** | **Intel Loihi 2 / Edge IC** | Cloud GPU Only |
 
@@ -48,9 +48,16 @@ Decodification of 4 motor intentions (*Up, Down, Left, Right*) from a 128-channe
 
 ---
 
-### 2. Memory Footprint & Closed-Loop Latency Scaling
+### 2. Measured Memory Footprint & Scaling (T=20ms to T=1000ms)
 
-Comparison of memory usage and step latency across temporal decision windows ($T = 20\text{ms}$ to $T = 1000\text{ms}$):
+| Temporal Window (T) | R-STDP Izhikevich | BPTT LSTM | Memory Advantage |
+|---------------------|-------------------|-----------|------------------|
+| 20 ms | 34.4 MB | 88.9 MB | 2.58× |
+| 40 ms | 69.1 MB | 100.4 MB | 1.45× |
+| 100 ms | 71.0 MB | 137.5 MB | 1.93× |
+| 200 ms | 74.3 MB | 197.8 MB | 2.66× |
+| 500 ms | 84.5 MB | 381.1 MB | 4.51× |
+| **1000 ms** | **100.5 MB** | **683.9 MB** | **6.80×** |
 
 ![Latency and Memory Scaling](figures/latency_memory_scaling.png)
 
@@ -82,7 +89,7 @@ Learning is governed by a global neuromodulatory dopamine signal without storing
 
 $$\Delta W = \frac{A_{\text{LTP}}}{B} \cdot \left( \text{Reward\_Matrix} \odot \text{Spikes} \right)^T \times X_{\text{cortical}}$$
 
-- **LTP ($\text{Reward} = +1.0$):** Target movement population sinapses are potentiated.
+- **LTP ($\text{Reward} = +1.0$):** Target movement population synapses are potentiated.
 - **LTD ($\text{Reward} = -0.33$):** Non-target populations are depressed with zero-sum balance.
 - **Synaptic Homeostasis:** $L_1$ norm scaling ($W_{\text{target}} = 1.0$) prevents runaway excitation.
 
